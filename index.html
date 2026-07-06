@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Walk and Explode (RUSSIAN ROULETTE)</title>
+    
+    <link rel="stylesheet" href="lib/dat.gui.css">
+    <link rel="stylesheet" href="style.css">
+
+    <script id="vertex-shader" type="x-shader/x-vertex">#version 300 es
+        layout(location = 0) in vec3 a_position;
+        layout(location = 1) in vec2 a_uv;
+        layout(location = 2) in vec3 a_normal;
+        layout(location = 3) in mat4 a_instanceMatrix;
+
+        uniform mat4 u_view;
+        uniform mat4 u_projection;
+
+        out vec2 v_uv;
+        out vec3 v_worldPos;
+        out vec3 v_normal;
+
+        void main() {
+            v_uv = a_uv;
+            vec4 worldPos = a_instanceMatrix * vec4(a_position, 1.0);
+            v_worldPos = worldPos.xyz;
+            v_normal = normalize(mat3(a_instanceMatrix) * a_normal);
+            gl_Position = u_projection * u_view * worldPos;
+        }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">#version 300 es
+        precision mediump float;
+
+        in vec2 v_uv;
+        in vec3 v_worldPos;
+        in vec3 v_normal;
+
+        uniform vec4 u_color;
+        uniform bool u_useTexture;
+        uniform sampler2D u_texture;
+
+        uniform vec3 u_lightPosition;
+        uniform vec3 u_lightColor;
+        uniform vec3 u_viewPosition;
+
+        uniform bool u_isBoard;
+        uniform float u_time;
+        uniform float u_activeBombs;
+        uniform bool u_advancedRender;
+        uniform float u_fade;
+        uniform float u_uvScale;
+
+        out vec4 outColor;
+
+        void main() {
+            vec4 baseColor = u_color;
+            
+            if (u_isBoard) {
+                baseColor.rgb *= 0.5; 
+                float tileId = floor(v_worldPos.x + 0.5) * 13.0 + floor(v_worldPos.z + 0.5) * 7.0;
+                float glitchTrigger = sin(u_time * (2.5 + (u_activeBombs * 0.8)) + tileId);
+                
+                if (glitchTrigger > 0.98) {
+                    baseColor = vec4(1.0, 0.0, 0.0, 0.8);
+                }
+            }
+
+            if (u_useTexture) {
+            vec4 texColor = texture(u_texture, v_uv * u_uvScale); 
+            baseColor *= texColor;
+        }
+
+            vec3 N = normalize(v_normal);
+            vec3 L = normalize(u_lightPosition - v_worldPos);
+            vec3 V = normalize(u_viewPosition - v_worldPos);
+
+            float lambertian = max(dot(N, L), 0.0);
+            vec3 diffuse = u_lightColor * lambertian * baseColor.rgb;
+
+            vec3 H = normalize(L + V);
+            float specularIntensity = pow(max(dot(N, H), 0.0), 32.0);
+            vec3 specular = vec3(0.5) * specularIntensity * lambertian;
+
+            vec3 ambient = baseColor.rgb * 0.2;
+
+            vec3 finalRgb = ambient + diffuse + specular;
+            float finalAlpha = baseColor.a;
+
+            if (u_advancedRender && u_fade < 1.0) {
+                finalRgb = vec3(1.0, 0.6, 0.2) + (1.0 - u_fade) * 2.0; 
+                finalAlpha *= u_fade; 
+            }
+
+            outColor = vec4(finalRgb, finalAlpha);
+        }
+    </script>
+</head>
+<body>
+
+    <div id="settings-controls">
+        
+        <div>
+            <label for="music-select" style="font-weight: bold; margin-right: 10px; display: inline-block; width: 70px;">Musica:</label>
+            <select id="music-select" style="background: #222; color: #00ffff; border: 1px solid #00ffff; padding: 5px; border-radius: 4px; outline: none; cursor: pointer; width: 120px;">
+                <option value="none">Spenta</option>
+                <option value="assets/Musica-Chill.mp3">Chill</option>
+                <option value="assets/Musica-Paurosa.mp3">Paurosa</option>
+                <option value="assets/Musica-Accattivante.mp3">Accattivante</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="arena-select" style="font-weight: bold; margin-right: 10px; display: inline-block; width: 70px;">Arena:</label>
+            <select id="arena-select" style="background: #222; color: #ff6600; border: 1px solid #ff6600; padding: 5px; border-radius: 4px; outline: none; cursor: pointer; width: 120px;">
+                <option value="hell">Hell Arena</option>
+                <option value="parking">Parking Arena</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="advanced-render-chk" style="font-weight: bold; margin-right: 10px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="advanced-render-chk" style="cursor: pointer;"> 
+                Render Avanzato
+            </label>
+        </div>
+
+    </div>
+
+    <div id="ui-container">
+        <div id="game-info">
+            <h1 id="game-title">Walk and Explode (RUSSIAN ROULETTE)</h1>
+            <p id="game-status">Inizializzazione...</p>
+        </div>
+
+        <div class="game-instructions">
+            <h3>Muoviti di una casella per round stando attento a non finire su una casella attiva, IL PRIMO CHE ESPLODE PERDE!</h3>
+            <p>Ad ogni round, prima di muovertim, puoi scegliere se far attivare una nuova casella del Terreno di Gioco in modo randomico.</p>
+        </div>
+    </div>
+
+    <div id="round-banner" class="banner hidden">ROUND N. 1</div>
+    <div id="game-over-banner" class="banner hidden">GAME OVER</div>
+
+    <div id="controls-pg1" class="controls-container left">
+        <div class="player-label">PG 1</div>
+        <div class="d-pad">
+            <button id="btn-nw-1" class="ctrl-btn">↖</button>
+            <button id="btn-n-1" class="ctrl-btn">↑</button>
+            <button id="btn-ne-1" class="ctrl-btn">↗</button>
+            
+            <button id="btn-w-1" class="ctrl-btn">←</button>
+            <div class="d-pad-center"></div>
+            <button id="btn-e-1" class="ctrl-btn">→</button>
+            
+            <button id="btn-sw-1" class="ctrl-btn">↙</button>
+            <button id="btn-s-1" class="ctrl-btn">↓</button>
+            <button id="btn-se-1" class="ctrl-btn">↘</button>
+        </div>
+        <button id="btn-bomb-1" class="btn-bomb">PIAZZA BOMBA</button>
+    </div>
+
+    <div id="controls-pg2" class="controls-container right">
+        <div class="player-label">PG 2</div>
+        <div class="d-pad">
+            <button id="btn-nw-2" class="ctrl-btn">↖</button>
+            <button id="btn-n-2" class="ctrl-btn">↑</button>
+            <button id="btn-ne-2" class="ctrl-btn">↗</button>
+            
+            <button id="btn-w-2" class="ctrl-btn">←</button>
+            <div class="d-pad-center"></div>
+            <button id="btn-e-2" class="ctrl-btn">→</button>
+            
+            <button id="btn-sw-2" class="ctrl-btn">↙</button>
+            <button id="btn-s-2" class="ctrl-btn">↓</button>
+            <button id="btn-se-2" class="ctrl-btn">↘</button>
+        </div>
+        <button id="btn-bomb-2" class="btn-bomb">PIAZZA BOMBA</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    
+    <div id="white-flash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 1s ease-in-out;"></div>
+
+    <script src="lib/webgl-utils.js"></script>
+    <script src="lib/m4.js"></script>
+    <script src="lib/mesh_utils.js"></script>
+    <script src="lib/glm_utils.js"></script>
+    <script src="lib/dat.gui.js"></script>
+
+    <script src="js/utilities.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/scene.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
