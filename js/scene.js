@@ -68,7 +68,7 @@ class Scene {
 
         
         this.meshPoster = await loadPipelineMesh('assets/foto-autore.obj', 'assets/');
-        this.posterTexture = await loadTexture(gl, 'assets/foto-autore.PNG');
+        this.posterTexture = await loadTexture(gl, 'assets/foto.png');
 
         await this.loadArena('hell');
 
