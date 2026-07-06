@@ -18,7 +18,7 @@ class Scene {
         this.meshPlayer2 = null;
         this.meshPoster = null;  // Nuova variabile per la mesh del poster
         
-        this.fotoTexture = null; 
+        this.posterTexture = null; 
         this.boardTexture = null; 
         this.spawnTexture = null;
         
