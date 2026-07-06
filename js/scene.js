@@ -63,7 +63,6 @@ class Scene {
             uvScale: gl.getUniformLocation(this.program, 'u_uvScale')
         };
 
-        this.fotoTexture = await loadTexture(gl, 'assets/foto-autore.png');
         this.boardTexture = await loadTexture(gl, 'assets/marmo_bianco.jpeg');
         this.spawnTexture = await loadTexture(gl, 'assets/spawn.png');
 
