@@ -153,12 +153,12 @@ function createInstancedModel(gl, geometry, attribLocations, instanceMatrices) {
     gl.vertexAttribPointer(attribLocations.normal, 3, gl.FLOAT, false, 0, 0);
 
     const instanceBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer); // Il binding DEVE avvenire prima del bufferData!
+    gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer); 
     const flatMatrices = new Float32Array(instanceMatrices.length * 16);
     for (let i = 0; i < instanceMatrices.length; i++) {
         flatMatrices.set(instanceMatrices[i], i * 16);
     }
-    gl.bufferData(gl.ARRAY_BUFFER, flatMatrices, gl.DYNAMIC_DRAW); // DYNAMIC_DRAW per animazioni fluide
+    gl.bufferData(gl.ARRAY_BUFFER, flatMatrices, gl.DYNAMIC_DRAW); 
 
     const baseLoc = attribLocations.instanceMatrix;
     for (let i = 0; i < 4; i++) {
@@ -175,7 +175,8 @@ function createInstancedModel(gl, geometry, attribLocations, instanceMatrices) {
         vao,
         vertexCount: geometry.vertexCount,
         instanceCount: instanceMatrices.length,
-        instanceBuffer: instanceBuffer // Restituiamo il buffer per usarlo in scene.js
+        instanceBuffer: instanceBuffer,
+        buffers: [positionBuffer, uvBuffer, normalBuffer, instanceBuffer] // Array di tutti i buffer per il clean-up
     };
 }
 
@@ -213,7 +214,8 @@ function createInstancedMultiPartModel(gl, mesh, attribLocations, instanceMatric
             vao: model.vao,
             vertexCount: model.vertexCount,
             instanceCount: model.instanceCount,
-            instanceBuffer: model.instanceBuffer, // Fondamentale per l'animazione!
+            instanceBuffer: model.instanceBuffer, 
+            buffers: model.buffers, // Passaggio del puntatore in alto
             texName: texName,
             color: diffuseColor 
         });

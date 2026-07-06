@@ -36,7 +36,8 @@ class Game {
     } 
 
     movePlayer(playerId, dx, dz) {
-        if (this.gameOver || this.currentTurn != playerId) return;
+        // Implementata uguaglianza stretta
+        if (this.gameOver || this.currentTurn !== playerId) return;
 
         const p = this.players[playerId - 1];
         const newX = p.x + dx;
@@ -44,7 +45,7 @@ class Game {
 
         if (newX >= 0 && newX < this.boardSize && newZ >= 0 && newZ < this.boardSize) {
             
-            const otherPlayerId = playerId == 1 ? 2 : 1;
+            const otherPlayerId = playerId === 1 ? 2 : 1;
             const otherP = this.players[otherPlayerId - 1];
             if (newX === otherP.x && newZ === otherP.z) {
                 return; 
@@ -56,7 +57,7 @@ class Game {
 
             if (this.boardLogic[newZ][newX].active) {
                 this.gameOver = true;
-                const winnerId = playerId == 1 ? 2 : 1;
+                const winnerId = playerId === 1 ? 2 : 1;
                 
                 document.dispatchEvent(new CustomEvent('player-explode', { 
                     detail: { explodingId: playerId, winnerId: winnerId } 
@@ -68,7 +69,8 @@ class Game {
     } 
 
     useBomb(playerId) {
-        if (this.gameOver || this.currentTurn != playerId || this.bombUsedThisRound[playerId]) return;
+        // Implementata uguaglianza stretta
+        if (this.gameOver || this.currentTurn !== playerId || this.bombUsedThisRound[playerId]) return;
         
         const disabledTiles = [];
         for (let z = 0; z < this.boardSize; z++) {

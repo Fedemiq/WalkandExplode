@@ -50,7 +50,6 @@
         uniform float u_activeBombs;
         uniform bool u_advancedRender;
         uniform float u_fade;
-        uniform float u_uvScale;
 
         out vec4 outColor;
 
@@ -68,9 +67,9 @@
             }
 
             if (u_useTexture) {
-            vec4 texColor = texture(u_texture, v_uv * u_uvScale); 
-            baseColor *= texColor;
-        }
+                vec4 texColor = texture(u_texture, v_uv); 
+                baseColor *= texColor;
+            }
 
             vec3 N = normalize(v_normal);
             vec3 L = normalize(u_lightPosition - v_worldPos);

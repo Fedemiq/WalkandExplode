@@ -10,13 +10,13 @@ class Scene {
         this.arenaParts = null;
         this.boardParts = null;
         this.spawnParts = null;
-        this.posterParts = null; // Nuova variabile per le parti del poster
+        this.posterParts = null; 
 
         this.player1Parts = null;
         this.player2Parts = null;
         this.meshPlayer1 = null; 
         this.meshPlayer2 = null;
-        this.meshPoster = null;  // Nuova variabile per la mesh del poster
+        this.meshPoster = null;  
         
         this.boardTexture = null; 
         this.spawnTexture = null;
@@ -59,8 +59,8 @@ class Scene {
             time: gl.getUniformLocation(this.program, 'u_time'),
             activeBombs: gl.getUniformLocation(this.program, 'u_activeBombs'),
             advancedRender: gl.getUniformLocation(this.program, 'u_advancedRender'),
-            fade: gl.getUniformLocation(this.program, 'u_fade'),
-            uvScale: gl.getUniformLocation(this.program, 'u_uvScale')
+            fade: gl.getUniformLocation(this.program, 'u_fade')
+            // u_uvScale rimossa
         };
 
         this.boardTexture = await loadTexture(gl, 'assets/marmo_bianco.jpeg');
@@ -68,7 +68,7 @@ class Scene {
 
         
         this.meshPoster = await loadPipelineMesh('assets/foto-autore.obj', 'assets/');
-        this.posterTexture = await loadTexture(gl, 'assets/foto.png');
+        this.posterTexture = await loadTexture(gl, 'assets/foto-autore.PNG');
 
         await this.loadArena('hell');
 
@@ -101,19 +101,23 @@ class Scene {
     async loadArena(arenaType) {
         const gl = this.gl;
         
-        // Pulisce l'arena esistente
-        const oldParts = this.arenaParts;
-        this.arenaParts = null; 
-        if (oldParts) {
-            oldParts.forEach(part => gl.deleteVertexArray(part.vao));
-        }
+        // Risoluzione Memory Leak: Eliminazione completa di VAO e Buffer dalla GPU
+        const deleteParts = (parts) => {
+            if (parts) {
+                parts.forEach(part => {
+                    gl.deleteVertexArray(part.vao);
+                    if (part.buffers) {
+                        part.buffers.forEach(buffer => gl.deleteBuffer(buffer));
+                    }
+                });
+            }
+        };
 
-        // Pulisce il poster esistente per riposizionarlo
-        const oldPosterParts = this.posterParts;
+        deleteParts(this.arenaParts);
+        this.arenaParts = null; 
+        
+        deleteParts(this.posterParts);
         this.posterParts = null;
-        if (oldPosterParts) {
-            oldPosterParts.forEach(part => gl.deleteVertexArray(part.vao));
-        }
 
         let objPath = '';
         let basePath = '';
@@ -132,14 +136,11 @@ class Scene {
             
             this.arenaParts = createInstancedMultiPartModel(gl, meshArena, this.attribLocations, [m4.identity()]);
 
-            // Ricostruisce il poster nella nuova posizione appropriata per l'arena
             if (this.meshPoster) {
                 let posterMatrix;
                 if (arenaType === 'hell') {
-                    // Posizione per Hell Arena (assunto x=0)
                     posterMatrix = m4.translation(14, 1, -2);
                 } else if (arenaType === 'parking') {
-                    // Posizione e rotazione per Parking Arena
                     posterMatrix = m4.translation(-1.2, 2.5, 5);
                     posterMatrix = m4.zRotate(posterMatrix, Math.PI / 2);
                     posterMatrix = m4.xRotate(posterMatrix, -(Math.PI / 2));
@@ -162,34 +163,41 @@ class Scene {
         if (!parts) return;
 
         parts.forEach(part => {
-            this.gl.bindVertexArray(part.vao);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, part.instanceBuffer);
             this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, flatMatrix);
         });
-        this.gl.bindVertexArray(null);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
     }
 
     updatePlayers(players) {
         if (!this.meshPlayer1 || !this.meshPlayer2) 
             return;
 
-        this.currentPlayersState = JSON.parse(JSON.stringify(players));
+        // Spread Operator (Strutturale) al posto di JSON.parse/stringify
+        this.currentPlayersState = players.map(p => ({ ...p }));
+        
         const offset = 4;
         
         for (let i = 0; i < players.length; i++) {
             const p = players[i];
             let matrix = m4.translation(p.x - offset, 0.0, p.z - offset);
-            if (p.id === 2) 
+            if (p.id === 2) {
                 matrix = m4.yRotate(matrix, Math.PI);
+            }
             
+            // Ottimizzazione: Crea il modello solo se non esiste, altrimenti aggiorna solo la matrice
             if (p.id === 1) {
-                if (this.player1Parts) 
-                    this.player1Parts.forEach(p => this.gl.deleteVertexArray(p.vao));
-                this.player1Parts = createInstancedMultiPartModel(this.gl, this.meshPlayer1, this.attribLocations, [matrix]);
+                if (!this.player1Parts) {
+                    this.player1Parts = createInstancedMultiPartModel(this.gl, this.meshPlayer1, this.attribLocations, [matrix]);
+                } else {
+                    this.updatePlayerMatrix(1, matrix);
+                }
             } else {
-                if (this.player2Parts) 
-                    this.player2Parts.forEach(p => this.gl.deleteVertexArray(p.vao));
-                this.player2Parts = createInstancedMultiPartModel(this.gl, this.meshPlayer2, this.attribLocations, [matrix]);
+                if (!this.player2Parts) {
+                    this.player2Parts = createInstancedMultiPartModel(this.gl, this.meshPlayer2, this.attribLocations, [matrix]);
+                } else {
+                    this.updatePlayerMatrix(2, matrix);
+                }
             }
         }
     }
@@ -253,7 +261,8 @@ class Scene {
         gl.uniform1f(this.uniformLocations.activeBombs, this.activeBombsCount);
         gl.uniform1i(this.uniformLocations.advancedRender, this.advancedRenderEnabled ? 1 : 0);
 
-        const drawParts = (partsArray, baseColor, isBoard, overrideTexture = null, isExploding = false, uvScaleOverride = 35.0) => {
+        // Firma corretta per non passare l'ormai eliminato uvScaleOverride
+        const drawParts = (partsArray, baseColor, isBoard, overrideTexture = null, isExploding = false) => {
             if (!partsArray) return;
             
             if (isExploding && this.advancedRenderEnabled) {
@@ -283,7 +292,6 @@ class Scene {
                     gl.activeTexture(gl.TEXTURE0);
                     gl.bindTexture(gl.TEXTURE_2D, overrideTexture);
                     gl.uniform1i(this.uniformLocations.texture, 0);
-                    gl.uniform1f(this.uniformLocations.uvScale, uvScaleOverride); 
                     texBound = true;
                 } else if (part.texName) {
                     const tex = loadedTextures.get(part.texName);
@@ -292,14 +300,12 @@ class Scene {
                         gl.activeTexture(gl.TEXTURE0);
                         gl.bindTexture(gl.TEXTURE_2D, tex);
                         gl.uniform1i(this.uniformLocations.texture, 0);
-                        gl.uniform1f(this.uniformLocations.uvScale, 1.0); 
                         texBound = true;
                     }
                 }
 
                 if (!texBound) {
                     gl.uniform1i(this.uniformLocations.useTexture, 0);
-                    gl.uniform1f(this.uniformLocations.uvScale, 1.0); 
                 }
                 
                 gl.drawArraysInstanced(gl.TRIANGLES, 0, part.vertexCount, part.instanceCount);
@@ -309,9 +315,9 @@ class Scene {
         };
 
         drawParts(this.arenaParts, [1.0, 1.0, 1.0, 1.0], 0);
-        drawParts(this.posterParts, [1.0, 1.0, 1.0, 1.0], 0, this.posterTexture, false, 1.0);
-        drawParts(this.boardParts, [0.7, 0.7, 0.7, 1.0], 1, this.boardTexture, false, 1.0); 
-        drawParts(this.spawnParts, [1.0, 1.0, 1.0, 1.0], 1, this.spawnTexture, false, 10.0); 
+        drawParts(this.posterParts, [1.0, 1.0, 1.0, 1.0], 0, this.posterTexture, false);
+        drawParts(this.boardParts, [0.7, 0.7, 0.7, 1.0], 1, this.boardTexture, false); 
+        drawParts(this.spawnParts, [1.0, 1.0, 1.0, 1.0], 1, this.spawnTexture, false); 
         
         let p1Exploding = (this.explodingPlayerId === 1);
         let p2Exploding = (this.explodingPlayerId === 2);
