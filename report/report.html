@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Federico Micello" />
+    <title>Relazione di Computer Graphics - Walk and Explode</title>
+
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 1.75;
+            color: #111;
+            background: #fff;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 3rem 2rem 5rem;
+        }
+        header {
+            border-bottom: 1px solid #aaa;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+        header h1 {
+            font-size: 22pt;
+            margin: 0 0 0.3rem;
+        }
+        header p.subtitle {
+            font-size: 12pt;
+            margin: 0 0 1.5rem;
+        }
+
+        nav {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #aaa;
+        }
+
+        a {
+            color: #111;
+            text-decoration: none;
+        }
+        a.hover { text-decoration: underline; }
+
+        section {
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #ddd;
+        }
+        section:last-of-type { border-bottom: none; }
+        h2 {
+            font-size: 14pt;
+            margin: 0 0 1rem;
+        }
+        h3 {
+            font-size: 12pt;
+            font-style: italic;
+            margin: 1.75rem 0 0.5rem;
+            font-weight: bold;
+        }
+
+        p { margin: 0 0 0.85rem; }
+        p:last-child { margin-bottom: 0; }
+
+        code {
+            font-family: "Courier New", monospace;
+            font-size: 10pt;
+            background: #f4f4f4;
+            color: #1c612d;
+            padding: 0.1rem 0.3rem;
+        }
+
+        pre {
+            font-family: "Courier New", monospace;
+            font-size: 9.5pt;
+            background: #f4f4f4;
+            padding: 0.75rem 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        
+        .math {
+            font-family: "Courier New", monospace;
+            font-size: 10pt;
+            background: #f9f9f9;
+            padding: 0.5rem 1rem;
+            margin: 0.75rem 0;
+            display: block;
+        }
+
+        reference {
+            display: block;
+            margin: 0.5rem 0;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <header id="top">
+        <h1>Report Computer Graphics Modulo 1</h1>
+        <p class="subtitle">Walk and Explode: Gioco 3D interattivo sviluppato in WebGL 2.0</p>
+
+            <div><span>Autore:</span> Federico Micello</div>
+            <div><span>Matricola:</span> 0001189583</div>
+            <div><span>Docente:</span>  Prof. Giulio Casciola</div>
+    </header>
+
+    <nav id="indice">
+        <h2>Indice</h2>
+        <ol>
+            <li><a href="#introduzione">Introduzione</a></li>
+            <li><a href="#architettura">Architettura generale</a></li>
+            <li><a href="#pipeline">Pipeline di Rendering e Instanced Drawing</a></li>
+            <li><a href="#shader">Shader GLSL e Modello di Illuminazione</a></li>
+            <li><a href="#moduli">Moduli JavaScript</a></li>
+            <li><a href="#avanzato">Tecniche di Rendering Avanzate</a></li>
+            <li><a href="#riferimenti">Riferimenti</a></li>
+        </ol>
+    </nav>
+
+    <!-- 1 -->
+    <section id="introduzione">
+        <h2>1. Introduzione</h2>
+        <p>
+            "Walk and Explode (RUSSIAN ROULETTE)" è un videogioco a turni tridimensionale sviluppato interamente utilizzando l'API di basso livello WebGL 2.0. 
+            La scena rappresenta un'arena di gioco strutturata su una griglia 9x9 in cui due giocatori in locale si scontrano (1vs1) cercando di sopravvivere a un campo minato il più a lungo possibile. 
+        </p>
+        <p>
+            Al fine di garantire elevate prestazioni in fase di rendering, soprattutto per il caricamento e il disegno dell'intero tabellone, è stata implementata la tecnica dell'instanced rendering
+             (<code>gl.drawArraysInstanced</code>). Questo ha permesso di gestire la griglia del pavimento, le zone di spawn e gli elementi ripetitivi ottimizzando il numero di draw call passate alla GPU.
+        </p>
+        <p>
+            L'illuminazione ambientale è basata sul modello di riflessione di Phong calcolato per-frammento. 
+            Oltre al motore di illuminazione di base, il progetto integra una serie di tecniche di shading procedurale, tra cui un effetto di <em>glitch</em> dinamico dipendente dal tempo
+             per comunicare la gravità del pericolo all'utente (numero di caselle attive), e un sistema di Blending/Trasparenza per simulare l'incandescenza e la dissolvenza del personaggio all'esplosione.
+        </p>
+        <p>
+            L'interazione è nativamente cross-platform: l'utente può muoversi nell'ambiente usando mouse, tastiera o interfaccia touch. 
+            Il controllo della telecamera supporta l'orbitazione con scorrimento a un dito e un sistema di <em>pinch-to-zoom</em> calcolato dinamicamente tramite coordinate multi-touch.
+        </p>
+    </section>
+
+    <!-- 2 -->
+    <section id="architettura">
+        <h2>2. Architettura generale</h2>
+        <p>
+            Il progetto è stato sviluppato senza l'ausilio di framework di alto livello, strutturando il codice in moduli JavaScript separati con responsabilità ben distinte:
+        </p>
+        <pre>index.html         &lt;!-- shader GLSL, UI overlay HTML, layout base --&gt;
+style.css          &lt;!-- styling responsivo e layout mobile --&gt;
+js/
+  main.js          &lt;!-- loop di rendering, input multi-touch e mouse --&gt;
+  scene.js         &lt;!-- setup WebGL, gestione arene, animazioni matriciali --&gt;
+  camera.js        &lt;!-- telecamera orbitale in coordinate sferiche --&gt;
+  game.js          &lt;!-- logica a turni, update griglia e collisioni --&gt;
+  utilities.js     &lt;!-- parsing OBJ/MTL custom e caricamento texture --&gt;
+  ui.js            &lt;!-- controller d-pad, audio, banner overlay --&gt;
+assets/
+  models/          &lt;!-- .obj, .mtl (es. scimmie, arene, foto) --&gt;
+  textures/        &lt;!-- .png, .jpg (materiali e immagini custom) --&gt;
+lib/               &lt;!-- script di utilità matematica (m4.js) --&gt;</pre>
+        <p>
+            L'inizializzazione è asincrona. All'interno di <code>main.js</code>, la funzione IIFE <code>main()</code> istanzia la <code>Camera</code> e la <code>Scene</code>[cite: 16]. Si avvale di direttive <code>await</code> per attendere la compilazione degli shader e il bufferizzamento delle mesh e texture prima di rimuovere la schermata di caricamento e inizializzare <code>Game</code> e <code>UI</code>[cite: 16, 17].
+        </p>
+    </section>
+
+    <!-- 3 -->
+    <section id="pipeline">
+        <h2>3. Pipeline di rendering e Instanced Drawing</h2>
+        <h3>Gestione delle trasformazioni spaziali</h3>
+        <p>
+            L'approccio geometrico evita di allocare uniform singole per la model matrix di ogni entità. Al contrario, la matrice 4x4 viene passata al vertex shader come attributo <code>a_instanceMatrix</code> allocato in 4 slot consecutivi (location 3)[cite: 19, 20]. Tramite la chiamata <code>gl.vertexAttribDivisor(loc, 1)</code>, la pipeline grafica viene istruita ad avanzare di una matrice completa per ogni istanza renderizzata anziché per vertice[cite: 19].
+        </p>
+        
+        <h3>Aggiornamento dinamico dei buffer</h3>
+        <p>
+            Le trasformazioni degli attori mobili (i due giocatori e l'animazione di morte) vengono calcolate lato CPU ad ogni frame. L'aggiornamento in VRAM avviene richiamando <code>gl.bufferSubData()</code> che sovrascrive esclusivamente i byte corrispondenti alla <code>Float32Array</code> della singola istanza, senza la necessità di ricreare interamente il Vertex Array Object (VAO)[cite: 17].
+        </p>
+
+        <h3>Rendering pass</h3>
+        <p>
+            La funzione <code>scene.render()</code> esegue il flush del color e depth buffer e attiva il programma shader[cite: 17]. Viene calcolata la matrice di proiezione prospettica basata sull'aspect ratio dinamico (FOV 60°) e moltiplicata per la view matrix ricavata dalla telecamera[cite: 17].
+            Tutte le parti geometriche della scena vengono successivamente disegnate in successione tramite la funzione helper <code>drawParts</code>, che applica per ogni gruppo materiale la seguente chiamata:
+        </p>
+        <code style="display:block; margin: 0.5rem 0;">gl.drawArraysInstanced(gl.TRIANGLES, 0, part.vertexCount, part.instanceCount);</code>
+    </section>
+
+    <!-- 4 -->
+    <section id="shader">
+        <h2>4. Shader GLSL e Modello di Illuminazione</h2>
+
+        <h3>Modello Blinn-Phong</h3>
+        <p>
+            Il frammento viene illuminato sfruttando il modello di riflessione standard di Phong. Nel fragment shader, i vettori <code>N</code> (Normale), <code>L</code> (Luce) e <code>V</code> (Vista) vengono normalizzati a partire dalle posizioni in World Space interpolate dal rasterizzatore[cite: 20]. La luce si compone di:
+        </p>
+        <ul>
+            <li><strong>Ambient:</strong> Un 20% costante del colore base per evitare zone di completa oscurità (<code>baseColor.rgb * 0.2</code>)[cite: 20].</li>
+            <li><strong>Diffuse:</strong> Calcolata mediante il prodotto scalare di Lambert, <span class="math">max(dot(N, L), 0.0)</span>[cite: 20].</li>
+            <li><strong>Specular:</strong> Implementato tramite vettore Halfway (Blinn-Phong) <span class="math">H = normalize(L + V)</span>, elevato a potenza 32.0 (Shininess)[cite: 20].</li>
+        </ul>
+
+        <h3>UV Scaling e Override Texture</h3>
+        <p>
+            Il frammento riceve da CPU una variabile uniform <code>u_uvScale</code>[cite: 20]. Questa variabile permette di agire in maniera procedurale sul tiling e lo scalamento delle texture direttamente in fase di campionamento:
+        </p>
+        <span class="math">vec4 texColor = texture(u_texture, v_uv * u_uvScale);</span>
+        <p>
+            Questa tecnica consente di utilizzare una singola mesh geometrica (es. il piano 1x1 <code>foto-autore.obj</code> o la base di spawn) e mapparvi dinamicamente foto o texture ripetute (es. <code>gl.REPEAT</code>) specificando fattori di scala diversi dal main loop (come i valori <code>10.0</code> o <code>3.0</code> utilizzati per lo scaling)[cite: 17, 19].
+        </p>
+    </section>
+
+    <!-- 5 -->
+    <section id="moduli">
+        <h2>5. Moduli JavaScript</h2>
+
+        <h3>utilities.js: Parsing geometrico e caricamento asset</h3>
+        <p>
+            Il modulo <code>utilities.js</code> implementa da zero il caricamento di modelli Wavefront (OBJ) ed i rispettivi materiali (MTL)[cite: 19]. La funzione <code>loadPipelineMesh()</code> orchestra il parser, mentre <code>meshGroupToGeometry()</code> spacchetta gli array condivisi della struttura dati estrusa, separando posizioni, normali e coordinate UV allineandole in un <code>Float32Array</code> compatibile con <code>gl.bufferData</code>[cite: 19].
+        </p>
+
+        <h3>camera.js: Navigazione spaziale</h3>
+        <p>
+            Il sistema visivo utilizza una classe per le coordinate sferiche che mantiene i parametri di distanza, <span class="math">θ</span> (theta) e <span class="math">φ</span> (phi) rispetto a un target[cite: 14]. Il limite superiore del raggio zenitale è vincolato a <code>Math.PI / 2 - 0.1</code> per impedire lo scivolamento sotto al pavimento di gioco[cite: 14].
+        </p>
+
+        <h3>game.js & ui.js: Logica core e controlli UI</h3>
+        <p>
+            <code>Game</code> è la macchina a stati per l'elaborazione dei turni. Mantiene la rappresentazione virtuale della board logica su una matrice 9x9 e calcola le traiettorie valide per il posizionamento dei giocatori[cite: 15]. L'esito delle partite (vittoria/morte) invia eventi custom al DOM. 
+            Questi eventi sono intercettati da <code>UI</code>, che disabilita i controlli tramite binding (es. disabilitando i <code>button</code> e intercettando sia <code>pointerdown</code> per il touch-screen a latenza zero sia <code>keydown</code> per il desktop) e gestisce l'effetto sonoro di esplosione istanziando oggetti <code>Audio</code> nativi[cite: 18].
+        </p>
+        
+        <h3>main.js: Multitouch input e Time Management</h3>
+        <p>
+            <code>main.js</code> calcola l'avanzamento ciclico chiamando <code>requestAnimationFrame</code>. Estrae gli eventi su canvas per mouse e touch-screen, differenziando lo slide a 1 dito (che muta il <code>deltaX/deltaY</code> inviandolo a <code>camera.orbit()</code>) dalla complessa gestione a due dita[cite: 23]. In quest'ultimo caso (<code>event.touches.length === 2</code>), la libreria matematica standard calcola l'ipotenusa <code>Math.hypot(dx, dy)</code> tra i due tocchi originari e correnti elaborando un Delta Zoom proporzionale per abilitare il tipico gesto del <i>pinch-to-zoom</i>[cite: 23].
+        </p>
+    </section>
+
+    <!-- 6 -->
+    <section id="avanzato">
+        <h2>6. Tecniche di Rendering Avanzate</h2>
+
+        <h3>Glitch Shader Procedurale</h3>
+        <p>
+            Per fornire all'utente un feedback visivo di avvertimento proporzionale all'aumentare delle bombe innescate sulla mappa, il Fragment Shader utilizza un algoritmo procedurale di "glitching":
+        </p>
+        <span class="math">float tileId = floor(v_worldPos.x + 0.5) * 13.0 + floor(v_worldPos.z + 0.5) * 7.0;<br>
+float glitchTrigger = sin(u_time * (2.5 + (u_activeBombs * 0.8)) + tileId);</span>
+        <p>
+            Sfruttando la posizione spaziale in <i>World Space</i> interpolata dal rasterizzatore, ogni casella genera un <code>tileId</code> univoco[cite: 20]. Passando tale offset a un'onda sinusoidale animata dal tempo (<code>u_time</code>) e dalla quantità di trappole attive (<code>u_activeBombs</code>), i frammenti della board superato un certo threshold (<code>> 0.98</code>) colorano intensamente la mattonella di rosso[cite: 20].
+        </p>
+
+        <h3>Trasparenza via Per-Fragment Blending</h3>
+        <p>
+            Richiesta esplicitamente come funzionalità avanzata e innescata dalla spunta UI "Render Avanzato", questa feature prende il controllo della gestione Alpha di WebGL[cite: 17]. 
+            Alla ricezione dell'evento di sconfitta (morte del giocatore per via di una bomba), la funzione <code>render()</code> abilita il buffer delle trasparenze:
+        </p>
+        <code style="display:block; margin: 0.5rem 0;">gl.enable(gl.BLEND);<br>gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);</code>
+        <p>
+            Durante questa animazione controllata dalla CPU (la cui variabile <code>t</code> calcola l'arco di rotazione <span class="math">yRot = t * t * 12.0</span> per la spinta verticale) viene iniettato nello shader un moltiplicatore <code>u_fade</code> in discesa dal valore 1.0 allo 0.0 nel corso di 3.0 secondi[cite: 17]. 
+        </p>
+        <p>
+            Il Fragment Shader sfrutta questa variabile per sovrastare il normale ciclo di calcolo di Phong. L'albedo (RGB) viene forzato verso colori caldi a saturazione esponenziale (<i>Glowing</i>):
+        </p>
+        <span class="math">finalRgb = vec3(1.0, 0.6, 0.2) + (1.0 - u_fade) * 2.0;</span>
+        <p>
+            Infine, il canale Alpha viene moltiplicato linearmente per <code>u_fade</code> per istruire le Per-Fragment Operations a dissolvere progressivamente l'intero modello sullo sfondo fino alla scomparsa totale[cite: 20].
+        </p>
+    </section>
+
+    <!-- 7 -->
+    <section id="riferimenti">
+        <h2>7. Riferimenti</h2>
+        <p>
+            <div id="ref1" class="reference">
+                [1] Khronos Group, "WebGL 2.0 Specification", <a href="https://registry.khronos.org/webgl/specs/latest/2.0/" target="_blank">https://registry.khronos.org/webgl/specs/latest/2.0/</a>
+            </div>
+            <div id="ref2" class="reference">
+                [2] Mozilla Developer Network (MDN), "WebGL Fundamentals (Instanced Drawing)", <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext/drawArraysInstanced" target="_blank">MDN Web Docs</a>
+            </div>
+            <div id="ref3" class="reference">
+                [3] Dispense del corso "Computer Graphics", Prof. Serena Morigi.
+            </div>
+            <div id="ref4" class="reference">
+                [4] MDN Web Docs, "Touch events", <a href="https://developer.mozilla.org/en-US/docs/Web/API/Touch_events" target="_blank">https://developer.mozilla.org/en-US/docs/Web/API/Touch_events</a>
+            </div>
+        </p>
+    </section>
+
+</body>
+
+</html>
