@@ -273,6 +273,7 @@ float glitchTrigger = sin(u_time * (2.5 + (u_activeBombs * 0.8)) + tileId);</spa
         <p>
             Durante questa animazione controllata dalla CPU (la cui variabile <code>t</code> calcola l'arco di rotazione <span class="math">yRot = t * t * 12.0</span>
              per la spinta verticale) viene iniettato nello shader un moltiplicatore <code>u_fade</code> in discesa dal valore 1.0 allo 0.0 nel corso di 3.0 secondi. 
+            <img src="images/render-avanzato.png" alt="Screenshot della scena generale" style="max-width: 100%; margin-top: 0.5rem;" />
         </p>
         <p>
             Il Fragment Shader sfrutta questa variabile per sovrastare il normale ciclo di calcolo di Phong. L'albedo (RGB) viene forzato verso colori caldi a saturazione esponenziale (<i>Glowing</i>):
