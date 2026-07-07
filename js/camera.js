@@ -32,7 +32,7 @@ class Camera {
 
     zoom(deltaY) {
         this.distance += deltaY * 0.05;
-        this.distance = Math.max(5, Math.min(30, this.distance));
+        this.distance = Math.max(5, Math.min(18, this.distance));
 
         this._updatePosition();
     }
