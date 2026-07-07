@@ -2,7 +2,7 @@
 body {
     margin: 0;
     overflow: hidden;
-    background-color: #111;
+    background-color: #111111;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     touch-action: none;
 }
@@ -17,7 +17,7 @@ canvas {
     position: absolute;
     top: 20px;
     left: 20px;
-    color: #fff;
+    color: #ffffff;
     z-index: 10;
     pointer-events: none;
     display: flex;
@@ -40,7 +40,7 @@ canvas {
 }
 
 .game-instructions {
-    background: rgba(0, 0, 0, 0.7);
+    background: #000000b3;
     padding: 15px;
     border-radius: 8px;
     border: 3px solid #ffcc00;
@@ -59,7 +59,40 @@ canvas {
     text-transform: uppercase;
 }
 
+#music-select{
+    background: #222222; 
+    color: #00ffff; 
+    border: 1px solid #00ffff; 
+    padding: 5px; 
+    border-radius: 4px; 
+    outline: none; 
+    cursor: pointer; 
+    width: 120px;
+}
 
+#arena-select{
+    background: #292929; 
+    color: #ff6600; 
+    border: 1px solid #ff6600; 
+    padding: 5px; 
+    border-radius: 4px; 
+    outline: none; 
+    cursor: pointer; 
+    width: 120px;
+}
+
+#white-flash{
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    background: white; 
+    z-index: 9999; 
+    pointer-events: none; 
+    opacity: 0; 
+    transition: opacity 1s ease-in-out;
+}
 .banner {
     position: absolute;
     top: 50%;
@@ -67,9 +100,9 @@ canvas {
     transform: translate(-50%, -50%);
     font-size: 48px;
     font-weight: bold;
-    color: #fff;
+    color: #ffffff;
     text-align: center;
-    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9);
+    text-shadow: 0 4px 10px #000000;
     z-index: 100;
     pointer-events: none;
     transition: opacity 0.5s ease;
@@ -111,12 +144,12 @@ canvas {
     background: rgba(0, 0, 0, 0.5);
     padding: 8px;
     border-radius: 12px;
-    border: 1px solid #555;
+    border: 1px solid #555555;
 }
 
 .ctrl-btn {
-    background: #222;
-    color: #fff;
+    background: #222222;
+    color: #ffffff;
     border: 2px solid #ffcc00;
     border-radius: 8px;
     font-size: 20px;
@@ -132,14 +165,14 @@ canvas {
 
 .ctrl-btn:active:not(:disabled) {
     background: #ffcc00;
-    color: #000;
+    color: #000000;
     transform: scale(0.95);
 }
 
 .ctrl-btn:disabled, .btn-bomb:disabled {
     opacity: 0.3;
     cursor: not-allowed;
-    border-color: #555;
+    border-color: #555555;
 }
 
 .d-pad-center {
@@ -150,7 +183,7 @@ canvas {
     width: 190px;
     padding: 12px;
     background: #ff4444;
-    color: #fff;
+    color: #ffffff;
     border: 2px solid #b31c1c;
     border-radius: 8px;
     font-size: 14px;
@@ -188,7 +221,7 @@ canvas {
 }
 
 #music-select {
-    background: #222; 
+    background: #222222; 
     color: #00ffff; 
     border: 1px solid #00ffff; 
     padding: 5px; 
@@ -199,7 +232,7 @@ canvas {
 }
 
 #arena-select {
-    background: #222; 
+    background: #222222; 
     color: #ff5e00; 
     border: 1px solid #ff5e00; 
     padding: 5px; 
@@ -267,7 +300,11 @@ canvas {
     }
 
     .ctrl-btn {
-        font-size: 16px;
+        font-size: 12px;
+        line-height: 1.1;
+        padding: 0; 
+        box-sizing: border-box;
+        overflow: hidden; 
     }
 
     .btn-bomb {

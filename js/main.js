@@ -95,7 +95,7 @@
         event.preventDefault(); // Evita lo scroll della pagina
         
         if (event.touches.length === 1) {
-            // Slide a 1 dito: Ruota la telecamera (X e Y)
+            // Slide a 1 dito: ruota la telecamera (X e Y)
             const currentX = event.touches[0].clientX;
             const currentY = event.touches[0].clientY;
             
@@ -108,12 +108,12 @@
             touchStartY = currentY;
             
         } else if (event.touches.length === 2) {
-            // Pinch a 2 dita: Zoom della telecamera
+            // Pinch a 2 dita: zoom della telecamera
             const dx = event.touches[0].clientX - event.touches[1].clientX;
             const dy = event.touches[0].clientY - event.touches[1].clientY;
             const currentPinchDistance = Math.hypot(dx, dy);
             
-            // La differenza di distanza determina lo zoom
+            // La differenza della distanza determina il segno dello zoom
             const deltaZoom = initialPinchDistance - currentPinchDistance;
             
             camera.zoom(deltaZoom * 0.1); 

@@ -60,7 +60,7 @@ class Scene {
             activeBombs: gl.getUniformLocation(this.program, 'u_activeBombs'),
             advancedRender: gl.getUniformLocation(this.program, 'u_advancedRender'),
             fade: gl.getUniformLocation(this.program, 'u_fade')
-            // u_uvScale rimossa
+            
         };
 
         this.boardTexture = await loadTexture(gl, 'assets/marmo_bianco.jpeg');
@@ -101,7 +101,6 @@ class Scene {
     async loadArena(arenaType) {
         const gl = this.gl;
         
-        // Risoluzione Memory Leak: Eliminazione completa di VAO e Buffer dalla GPU
         const deleteParts = (parts) => {
             if (parts) {
                 parts.forEach(part => {
@@ -185,7 +184,7 @@ class Scene {
                 matrix = m4.yRotate(matrix, Math.PI);
             }
             
-            // Ottimizzazione: Crea il modello solo se non esiste, altrimenti aggiorna solo la matrice
+            // Crea il modello solo se non esiste, altrimenti aggiorna solo la matrice
             if (p.id === 1) {
                 if (!this.player1Parts) {
                     this.player1Parts = createInstancedMultiPartModel(this.gl, this.meshPlayer1, this.attribLocations, [matrix]);
@@ -261,7 +260,7 @@ class Scene {
         gl.uniform1f(this.uniformLocations.activeBombs, this.activeBombsCount);
         gl.uniform1i(this.uniformLocations.advancedRender, this.advancedRenderEnabled ? 1 : 0);
 
-        // Firma corretta per non passare l'ormai eliminato uvScaleOverride
+        
         const drawParts = (partsArray, baseColor, isBoard, overrideTexture = null, isExploding = false) => {
             if (!partsArray) return;
             

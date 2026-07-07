@@ -215,7 +215,7 @@ function createInstancedMultiPartModel(gl, mesh, attribLocations, instanceMatric
             vertexCount: model.vertexCount,
             instanceCount: model.instanceCount,
             instanceBuffer: model.instanceBuffer, 
-            buffers: model.buffers, // Passaggio del puntatore in alto
+            buffers: model.buffers, 
             texName: texName,
             color: diffuseColor 
         });

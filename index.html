@@ -61,7 +61,7 @@
                 float tileId = floor(v_worldPos.x + 0.5) * 13.0 + floor(v_worldPos.z + 0.5) * 7.0;
                 float glitchTrigger = sin(u_time * (2.5 + (u_activeBombs * 0.8)) + tileId);
                 
-                if (glitchTrigger > 0.98) {
+                if (glitchTrigger > 0.90) {
                     baseColor = vec4(1.0, 0.0, 0.0, 0.8);
                 }
             }
@@ -102,7 +102,7 @@
         
         <div>
             <label for="music-select" style="font-weight: bold; margin-right: 10px; display: inline-block; width: 70px;">Musica:</label>
-            <select id="music-select" style="background: #222; color: #00ffff; border: 1px solid #00ffff; padding: 5px; border-radius: 4px; outline: none; cursor: pointer; width: 120px;">
+            <select id="music-select">
                 <option value="none">Spenta</option>
                 <option value="assets/Musica-Chill.mp3">Chill</option>
                 <option value="assets/Musica-Paurosa.mp3">Paurosa</option>
@@ -112,7 +112,7 @@
 
         <div>
             <label for="arena-select" style="font-weight: bold; margin-right: 10px; display: inline-block; width: 70px;">Arena:</label>
-            <select id="arena-select" style="background: #222; color: #ff6600; border: 1px solid #ff6600; padding: 5px; border-radius: 4px; outline: none; cursor: pointer; width: 120px;">
+            <select id="arena-select">
                 <option value="hell">Hell Arena</option>
                 <option value="parking">Parking Arena</option>
             </select>
@@ -180,7 +180,7 @@
 
     <canvas id="canvas"></canvas>
     
-    <div id="white-flash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 1s ease-in-out;"></div>
+    <div id="white-flash"></div>
 
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/m4.js"></script>

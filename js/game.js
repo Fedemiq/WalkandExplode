@@ -36,7 +36,6 @@ class Game {
     } 
 
     movePlayer(playerId, dx, dz) {
-        // Implementata uguaglianza stretta
         if (this.gameOver || this.currentTurn !== playerId) return;
 
         const p = this.players[playerId - 1];
@@ -68,8 +67,7 @@ class Game {
         }
     } 
 
-    useBomb(playerId) {
-        // Implementata uguaglianza stretta
+    useBomb(playerId) {    
         if (this.gameOver || this.currentTurn !== playerId || this.bombUsedThisRound[playerId]) return;
         
         const disabledTiles = [];

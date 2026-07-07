@@ -1,4 +1,3 @@
-// ui.js
 class UI {
     constructor(scene) {
         this.scene = scene;
@@ -99,7 +98,7 @@ class UI {
                 }
             }
 
-            // Invia in modo pulito il segnale bomba per il giocatore di turno
+            
             if (e.key === ' ' || e.code === 'Space') {
                 e.preventDefault(); 
                 this._emitBomb(this.currentTurn);
