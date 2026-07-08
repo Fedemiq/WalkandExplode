@@ -168,7 +168,7 @@ class UI {
             
             this.gameOverBanner.classList.remove('visible');
             this.gameOverBanner.classList.add('hidden');
-            this.gameOverBanner.style.color = "#fff";
+            this.gameOverBanner.style.color = "#ffffff";
             this.gameOverBanner.style.textShadow = "0 4px 10px rgba(0, 0, 0, 0.9)";
 
             const musicSelect = document.getElementById('music-select');

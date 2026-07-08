@@ -64,11 +64,11 @@ class Scene {
         };
 
         this.boardTexture = await loadTexture(gl, 'assets/marmo_bianco.jpeg');
-        this.spawnTexture = await loadTexture(gl, 'assets/spawn.png');
+        this.spawnTexture = await loadTexture(gl, 'assets/hell-arena/textures/1626818973_13-kartinkin-com-p-raskalennii-metall-tekstura-kr.jpeg');
 
         
         this.meshPoster = await loadPipelineMesh('assets/foto-autore.obj', 'assets/');
-        this.posterTexture = await loadTexture(gl, 'assets/foto-autore.png');
+        this.posterTexture = await loadTexture(gl, 'assets/foto-autore.PNG');
 
         await this.loadArena('hell');
 
@@ -94,8 +94,8 @@ class Scene {
         this.meshPlayer1 = await loadPipelineMesh('assets/scimmia1/scimmia1.obj', 'assets/scimmia1/');
         preloadMaterialTextures(gl, this.meshPlayer1, 'assets/scimmia1/');
 
-        this.meshPlayer2 = await loadPipelineMesh('assets/scimmia2/scimmia2.obj', 'assets/scimmia2/');
-        preloadMaterialTextures(gl, this.meshPlayer2, 'assets/scimmia2/');
+        this.meshPlayer2 = await loadPipelineMesh('assets/scimmia1/scimmia2.obj', 'assets/scimmia1/');
+        preloadMaterialTextures(gl, this.meshPlayer2, 'assets/scimmia1/');
     }
 
     async loadArena(arenaType) {
@@ -172,7 +172,6 @@ class Scene {
         if (!this.meshPlayer1 || !this.meshPlayer2) 
             return;
 
-        // Spread Operator (Strutturale) al posto di JSON.parse/stringify
         this.currentPlayersState = players.map(p => ({ ...p }));
         
         const offset = 4;
@@ -184,7 +183,6 @@ class Scene {
                 matrix = m4.yRotate(matrix, Math.PI);
             }
             
-            // Crea il modello solo se non esiste, altrimenti aggiorna solo la matrice
             if (p.id === 1) {
                 if (!this.player1Parts) {
                     this.player1Parts = createInstancedMultiPartModel(this.gl, this.meshPlayer1, this.attribLocations, [matrix]);

@@ -29,18 +29,18 @@ canvas {
     margin: 0;
     font-size: 28px;
     color: #ffcc00;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+    text-shadow: 2px 2px 4px #000000e6;
 }
 
 #game-status {
     margin: 5px 0 0 0;
     font-size: 18px;
     color: #ffcc00;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.902);
 }
 
 .game-instructions {
-    background: #000000b3;
+    background: rgba(0, 0, 0, 0.702);
     padding: 15px;
     border-radius: 8px;
     border: 3px solid #ffcc00;
@@ -160,7 +160,7 @@ canvas {
 }
 
 .ctrl-btn:hover:not(:disabled) {
-    background: #333;
+    background: #333333;
 }
 
 .ctrl-btn:active:not(:disabled) {

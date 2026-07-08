@@ -56,10 +56,9 @@ class Game {
 
             if (this.boardLogic[newZ][newX].active) {
                 this.gameOver = true;
-                const winnerId = playerId === 1 ? 2 : 1;
                 
                 document.dispatchEvent(new CustomEvent('player-explode', { 
-                    detail: { explodingId: playerId, winnerId: winnerId } 
+                    detail: { explodingId: playerId, winnerId: otherPlayerId } 
                 }));
                 return;
             }
@@ -71,12 +70,18 @@ class Game {
         if (this.gameOver || this.currentTurn !== playerId || this.bombUsedThisRound[playerId]) return;
         
         const disabledTiles = [];
+        const p1 = this.players[0];
+        const p2 = this.players[1];
+        let bombCount = 0;
+
         for (let z = 0; z < this.boardSize; z++) {
             for (let x = 0; x < this.boardSize; x++) {
-                if ((x === 0 && z === 4) || (x === 8 && z === 4)) continue;
+                if ((x === p1.x && z === p1.z) || (x === p2.x && z === p2.z)) continue;
                 
                 if (!this.boardLogic[z][x].active) {
                     disabledTiles.push({x, z});
+                } else {
+                    bombCount++;
                 }
             }
         }
@@ -84,19 +89,14 @@ class Game {
         if (disabledTiles.length > 0) {
             const rand = disabledTiles[Math.floor(Math.random() * disabledTiles.length)];
             this.boardLogic[rand.z][rand.x].active = true;
+            bombCount++;
         }
 
-        let bombCount = 0;
-        for (let z = 0; z < this.boardSize; z++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                if (this.boardLogic[z][x].active) bombCount++;
-            }
-        }
         this.scene.updateActiveBombs(bombCount);
         
         this.bombUsedThisRound[playerId] = true;
         this.ui.updateTurn(this.currentTurn, this.bombUsedThisRound);
-    } 
+    }
 
     _nextTurn() {
         if (this.currentTurn === 1) {
